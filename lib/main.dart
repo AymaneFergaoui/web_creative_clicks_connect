@@ -341,33 +341,36 @@ class _CategoryBar extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 8),
                 child: GestureDetector(
                   onTap: () => onSelected(cat),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeInOut,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primary
-                          : (isDark
-                              ? AppColors.darkCard
-                              : const Color(0xFFF0F4FF)),
-                      borderRadius: BorderRadius.circular(20),
-                      border: isSelected
-                          ? null
-                          : Border.all(
-                              color: isDark
-                                  ? Colors.white12
-                                  : Colors.blueGrey.shade100),
-                    ),
-                    child: Text(
-                      cat,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                  child: Center(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 4),
+                      decoration: BoxDecoration(
                         color: isSelected
-                            ? Colors.white
-                            : (isDark ? Colors.white70 : Colors.blueGrey),
+                            ? AppColors.primary
+                            : (isDark
+                                ? AppColors.darkCard
+                                : const Color(0xFFF0F4FF)),
+                        borderRadius: BorderRadius.circular(20),
+                        border: isSelected
+                            ? null
+                            : Border.all(
+                                color: isDark
+                                    ? Colors.white12
+                                    : Colors.blueGrey.shade100),
+                      ),
+                      child: Text(
+                        cat,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.2,
+                          color: isSelected
+                              ? Colors.white
+                              : (isDark ? Colors.white70 : Colors.blueGrey),
+                        ),
                       ),
                     ),
                   ),

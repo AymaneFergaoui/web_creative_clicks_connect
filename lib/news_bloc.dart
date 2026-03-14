@@ -54,7 +54,17 @@ class NewsBloc {
       for (final node in channel) {
         for (final element in node.findElements('item')) {
           final String title = _xmlText(element, 'title');
-          final String rawDescription = _xmlText(element, 'description');
+          
+          // Prefer content:encoded, fallback to description
+          String rawDescription = '';
+          final contentNodes = element.findElements('encoded', namespace: '*');
+          if (contentNodes.isNotEmpty) {
+            rawDescription = contentNodes.first.innerText;
+          }
+          if (rawDescription.isEmpty) {
+            rawDescription = _xmlText(element, 'description');
+          }
+          
           final String date = _xmlText(element, 'pubDate');
 
           // Extract link — RSS <link> is tricky: text may be in a CDATA text node
@@ -75,14 +85,16 @@ class NewsBloc {
             }
           }
 
-          // Extract image URL — try media:content, enclosure, then <img> in description
-          String image = '';
+          // Extract image URL — try <image>, media:content, enclosure, then <img> in description
+          String image = _xmlText(element, 'image').trim();
 
           // 1) media:content
-          final mediaContent = element.findAllElements('content',
-              namespace: 'http://search.yahoo.com/mrss/');
-          if (mediaContent.isNotEmpty) {
-            image = mediaContent.first.getAttribute('url') ?? '';
+          if (image.isEmpty) {
+            final mediaContent = element.findAllElements('content',
+                namespace: 'http://search.yahoo.com/mrss/');
+            if (mediaContent.isNotEmpty) {
+              image = mediaContent.first.getAttribute('url') ?? '';
+            }
           }
 
           // 2) enclosure
