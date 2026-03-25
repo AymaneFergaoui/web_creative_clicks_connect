@@ -50,31 +50,16 @@ class NewsBloc {
       );
       final document = xml.XmlDocument.parse(response.toString());
       final channel = document.findAllElements('channel');
-      List<NewsModel> news = [];
+      List<NewsModel> newsList = [];
       for (var node in channel) {
         node.findElements('item').forEach((element) {
-          String title =
-              element.findElements('title').isNotEmpty
-                  ? element.findElements('title').first.innerText
-                  : '';
-          String description =
-              element.findElements('description').isNotEmpty
-                  ? element.findElements('description').first.innerText
-                  : '';
-          String date =
-              element.findElements('pubDate').isNotEmpty
-                  ? element.findElements('pubDate').first.innerText
-                  : '';
-          String link =
-              element.findElements('link').isNotEmpty
-                  ? element.findElements('link').first.innerText
-                  : '';
-          String image =
-              element.findElements('image').isNotEmpty
-                  ? element.findElements('image').first.innerText
-                  : '';
+          String title = _xmlText(element, 'title');
+          String description = _xmlText(element, 'description');
+          String date = _xmlText(element, 'pubDate');
+          String link = _xmlText(element, 'link');
+          String image = _xmlText(element, 'image');
 
-          List<String> categories =
+          List<String> categoryList =
               element.findElements('category').map((e) => e.innerText).toList();
 
           DateFormat format = DateFormat("E, dd MMM yyyy HH:mm:ss");
@@ -112,21 +97,37 @@ class NewsBloc {
           String parsedDescription =
               html.parse(documentHtml.body?.text ?? '').documentElement?.text ??
               '';
-          news.add(
+          newsList.add(
             NewsModel(
               title: title,
               description: parsedDescription,
               date: dateFormatted,
               link: link,
               image: image,
-              categories: categories,
+              categories: categoryList,
             ),
           );
         });
       }
-      _news.add(news);
+      _allNews.add(newsList);
+      filterByCategory(_activeCategory.value);
     } catch (e) {
-      _news.addError(e);
+      _allNews.addError(e);
+      _filteredNews.addError(e);
+    }
+  }
+
+  void filterByCategory(String category) {
+    _activeCategory.add(category);
+    if (!_allNews.hasValue) return;
+
+    if (category == 'All') {
+      _filteredNews.add(_allNews.value);
+    } else {
+      final filtered = _allNews.value
+          .where((item) => item.categories.contains(category))
+          .toList();
+      _filteredNews.add(filtered);
     }
   }
 

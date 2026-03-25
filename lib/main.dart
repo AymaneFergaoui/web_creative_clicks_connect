@@ -46,12 +46,13 @@ ThemeData _buildLight() => ThemeData(
       ),
       scaffoldBackgroundColor: AppColors.surface,
       fontFamily: 'Roboto',
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.cardLight,
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
+
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
@@ -78,12 +79,13 @@ ThemeData _buildDark() => ThemeData(
       ),
       scaffoldBackgroundColor: AppColors.darkBg,
       fontFamily: 'Roboto',
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.darkCard,
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
+
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.darkBg,
         foregroundColor: Colors.white,
