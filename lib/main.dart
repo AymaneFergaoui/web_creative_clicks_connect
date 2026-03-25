@@ -1,8 +1,21 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'news_bloc.dart';
 import 'news_model.dart';
 
 void main() {
+  // Handle Flutter-specific errors (e.g., widget building issues)
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    debugPrint('Flutter Error: \${details.exception}');
+  };
+
+  // Handle errors not caught by Flutter (e.g., asynchronous errors)
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    debugPrint('Platform Dispatcher Error: \$error');
+    return true; // Return true to indicate the error was handled
+  };
+
   runApp(const MyApp());
 }
 
@@ -23,7 +36,7 @@ class MyApp extends StatelessWidget {
 }
 
 class NewsHomePage extends StatefulWidget {
-  const NewsHomePage({Key? key}) : super(key: key);
+  const NewsHomePage({super.key});
 
   @override
   State<NewsHomePage> createState() => _NewsHomePageState();
