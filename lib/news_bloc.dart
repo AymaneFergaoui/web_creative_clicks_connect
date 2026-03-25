@@ -8,26 +8,74 @@ import 'package:xml/xml.dart' as xml;
 import 'news_model.dart';
 
 class NewsBloc {
-  final BehaviorSubject<List<NewsModel>> _news = BehaviorSubject<List<NewsModel>>();
+  final BehaviorSubject<List<NewsModel>> _allNews =
+      BehaviorSubject<List<NewsModel>>();
+  final BehaviorSubject<List<NewsModel>> _filteredNews =
+      BehaviorSubject<List<NewsModel>>();
+  final BehaviorSubject<String> _activeCategory =
+      BehaviorSubject<String>.seeded('All');
 
-  Stream<List<NewsModel>> get news => _news.stream;
+  Stream<List<NewsModel>> get news => _filteredNews.stream;
+  Stream<String> get activeCategory => _activeCategory.stream;
+
+  String get currentCategory => _activeCategory.value;
+
+  List<String> _getAllCategories(List<NewsModel> newsList) {
+    final Set<String> cats = {};
+    for (final item in newsList) {
+      cats.addAll(item.categories);
+    }
+    final sorted = cats.toList()..sort();
+    return ['All', ...sorted];
+  }
+
+  List<String> get categories {
+    final all = _allNews.hasValue ? _allNews.value : <NewsModel>[];
+    return _getAllCategories(all);
+  }
+
+  /// Safely reads the inner text of the first matching XML element.
+  String _xmlText(xml.XmlElement parent, String tag) {
+    final elems = parent.findElements(tag);
+    if (elems.isEmpty) return '';
+    final node = elems.first;
+    // XmlElement.innerText returns a non-nullable String (concatenated text nodes)
+    return node.innerText;
+  }
 
   Future<void> getNews() async {
     try {
-      final response = await Dio().get('https://webcreativeclicks.com/feed/mobile');
+      final response = await Dio().get(
+        'https://webcreativeclicks.com/feed/mobile',
+      );
       final document = xml.XmlDocument.parse(response.toString());
       final channel = document.findAllElements('channel');
       List<NewsModel> news = [];
       for (var node in channel) {
         node.findElements('item').forEach((element) {
-          String title = element.findElements('title').isNotEmpty ? element.findElements('title').first.innerText : '';
-          String description = element.findElements('description').isNotEmpty ? element.findElements('description').first.innerText : '';
-          String date = element.findElements('pubDate').isNotEmpty ? element.findElements('pubDate').first.innerText : '';
-          String link = element.findElements('link').isNotEmpty ? element.findElements('link').first.innerText : '';
-          String image = element.findElements('image').isNotEmpty ? element.findElements('image').first.innerText : '';
+          String title =
+              element.findElements('title').isNotEmpty
+                  ? element.findElements('title').first.innerText
+                  : '';
+          String description =
+              element.findElements('description').isNotEmpty
+                  ? element.findElements('description').first.innerText
+                  : '';
+          String date =
+              element.findElements('pubDate').isNotEmpty
+                  ? element.findElements('pubDate').first.innerText
+                  : '';
+          String link =
+              element.findElements('link').isNotEmpty
+                  ? element.findElements('link').first.innerText
+                  : '';
+          String image =
+              element.findElements('image').isNotEmpty
+                  ? element.findElements('image').first.innerText
+                  : '';
 
-          List<String> categories = element.findElements('category').map((e) => e.innerText).toList();
-
+          List<String> categories =
+              element.findElements('category').map((e) => e.innerText).toList();
 
           DateFormat format = DateFormat("E, dd MMM yyyy HH:mm:ss");
           DateTime? dateTime;
@@ -61,15 +109,19 @@ class NewsBloc {
             dateFormatted = format.format(dateTime).replaceAll("'", '');
           }
           var documentHtml = html.parse(description);
-          String parsedDescription = html.parse(documentHtml.body?.text ?? '').documentElement?.text ?? '';
-          news.add(NewsModel(
-            title: title,
-            description: parsedDescription,
-            date: dateFormatted,
-            link: link,
-            image: image,
-            categories: categories,
-          ));
+          String parsedDescription =
+              html.parse(documentHtml.body?.text ?? '').documentElement?.text ??
+              '';
+          news.add(
+            NewsModel(
+              title: title,
+              description: parsedDescription,
+              date: dateFormatted,
+              link: link,
+              image: image,
+              categories: categories,
+            ),
+          );
         });
       }
       _news.add(news);
@@ -78,7 +130,8 @@ class NewsBloc {
     }
   }
 
-  Future launchUrlInBrowser(String url) async {
+  Future<void> launchUrlInBrowser(String url) async {
+    if (url.isEmpty) return;
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -86,6 +139,8 @@ class NewsBloc {
   }
 
   void dispose() {
-    _news.close();
+    _allNews.close();
+    _filteredNews.close();
+    _activeCategory.close();
   }
-} 
+}
