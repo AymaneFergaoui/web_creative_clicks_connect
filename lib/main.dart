@@ -1,5 +1,5 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:ui';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -10,12 +10,12 @@ void main() {
   // Handle Flutter-specific errors (e.g., widget building issues)
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
-    debugPrint('Flutter Error: \${details.exception}');
+    debugPrint('Flutter Error: ${details.exception}');
   };
 
   // Handle errors not caught by Flutter (e.g., asynchronous errors)
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
-    debugPrint('Platform Dispatcher Error: \$error');
+    debugPrint('Platform Dispatcher Error: $error');
     return true; // Return true to indicate the error was handled
   };
 
@@ -52,7 +52,6 @@ ThemeData _buildLight() => ThemeData(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
-
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
@@ -85,7 +84,6 @@ ThemeData _buildDark() => ThemeData(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
-
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.darkBg,
         foregroundColor: Colors.white,
@@ -117,7 +115,8 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  bool get isDark => _themeMode == ThemeMode.dark ||
+  bool get isDark =>
+      _themeMode == ThemeMode.dark ||
       (_themeMode == ThemeMode.system &&
           WidgetsBinding.instance.platformDispatcher.platformBrightness ==
               Brightness.dark);
@@ -147,8 +146,10 @@ class NewsHomePage extends StatefulWidget {
 class _NewsHomePageState extends State<NewsHomePage> {
   late final NewsBloc _bloc;
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
   List<String> _categories = ['All'];
   bool _firstLoad = true;
+  bool _isSearching = false;
 
   @override
   void initState() {
@@ -176,6 +177,7 @@ class _NewsHomePageState extends State<NewsHomePage> {
   void dispose() {
     _bloc.dispose();
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -190,58 +192,108 @@ class _NewsHomePageState extends State<NewsHomePage> {
         controller: _scrollController,
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           SliverAppBar(
-            expandedHeight: 100,
+            expandedHeight: _isSearching ? 80 : 100,
             floating: true,
             snap: true,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              title: Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: AppColors.accent,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'W',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 18,
-                        ),
+              title: _isSearching
+                  ? Container(
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  const Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Web Creative Clicks',
-                        style: TextStyle(
+                      child: TextField(
+                        controller: _searchController,
+                        autofocus: true,
+                        style: const TextStyle(
+                          color: Colors.white,
                           fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          letterSpacing: 0.2,
                         ),
-                      ),
-                      Text(
-                        'Digital Marketing Insights',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.white70,
+                        cursorColor: Colors.white,
+                        decoration: InputDecoration(
+                          hintText: 'Rechercher un article...',
+                          hintStyle: const TextStyle(
+                            color: Colors.white60,
+                            fontSize: 13,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.search_rounded,
+                            color: Colors.white70,
+                            size: 18,
+                          ),
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(
+                                    Icons.close_rounded,
+                                    color: Colors.white70,
+                                    size: 18,
+                                  ),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    _bloc.searchNews('');
+                                    setState(() {});
+                                  },
+                                )
+                              : null,
+                          contentPadding:
+                              const EdgeInsets.symmetric(vertical: 8),
+                          border: InputBorder.none,
                         ),
+                        onChanged: (val) {
+                          _bloc.searchNews(val);
+                          setState(() {});
+                        },
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    )
+                  : Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: AppColors.accent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'W',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        const Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Web Creative Clicks',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                            Text(
+                              'Blog & Actualités Digitales',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
               background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -256,7 +308,23 @@ class _NewsHomePageState extends State<NewsHomePage> {
             ),
             actions: [
               IconButton(
-                tooltip: isDark ? 'Light mode' : 'Dark mode',
+                tooltip: _isSearching ? 'Fermer la recherche' : 'Rechercher',
+                icon: Icon(
+                  _isSearching ? Icons.close_rounded : Icons.search_rounded,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isSearching = !_isSearching;
+                    if (!_isSearching) {
+                      _searchController.clear();
+                      _bloc.searchNews('');
+                    }
+                  });
+                },
+              ),
+              IconButton(
+                tooltip: isDark ? 'Mode clair' : 'Mode sombre',
                 icon: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
                   child: Icon(
@@ -305,7 +373,14 @@ class _NewsHomePageState extends State<NewsHomePage> {
                     }
                     final news = snapshot.data ?? [];
                     if (news.isEmpty) {
-                      return const _EmptyView();
+                      return _EmptyView(
+                        searchQuery: _searchController.text.trim(),
+                        onClearSearch: () {
+                          _searchController.clear();
+                          _bloc.searchNews('');
+                          setState(() {});
+                        },
+                      );
                     }
                     return ListView.builder(
                       padding: const EdgeInsets.only(top: 8, bottom: 24),
@@ -454,9 +529,27 @@ class _NewsCard extends StatelessWidget {
                     highlightColor:
                         isDark ? const Color(0xFF2A3554) : Colors.grey.shade100,
                     child: Container(
-                        height: 190, color: Colors.grey.shade300),
+                      height: 190,
+                      color: Colors.grey.shade300,
+                    ),
                   ),
-                  errorWidget: (context, url, error) => const SizedBox(),
+                  errorWidget: (context, url, error) => Container(
+                    height: 140,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: isDark
+                            ? [AppColors.darkCard, AppColors.darkSurface]
+                            : [const Color(0xFFE3EDFA), const Color(0xFFEFF4FB)],
+                      ),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.article_outlined,
+                        size: 44,
+                        color: isDark ? Colors.white24 : Colors.blueGrey.shade200,
+                      ),
+                    ),
+                  ),
                 ),
               ),
 
@@ -469,13 +562,13 @@ class _NewsCard extends StatelessWidget {
                   if (item.categories.isNotEmpty)
                     Wrap(
                       spacing: 6,
+                      runSpacing: 4,
                       children: item.categories
-                          .take(2)
+                          .take(3)
                           .map((cat) => _CategoryPill(cat))
                           .toList(),
                     ),
-                  if (item.categories.isNotEmpty)
-                    const SizedBox(height: 8),
+                  if (item.categories.isNotEmpty) const SizedBox(height: 8),
 
                   // Title
                   Text(
@@ -507,14 +600,16 @@ class _NewsCard extends StatelessWidget {
                     ),
                   const SizedBox(height: 12),
 
-                  // Footer: date + read more
+                  // Footer: Author & Date + Read more
                   Row(
                     children: [
-                      Icon(Icons.calendar_today_rounded,
-                          size: 12,
-                          color: isDark
-                              ? Colors.white38
-                              : Colors.blueGrey.shade400),
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 12,
+                        color: isDark
+                            ? Colors.white38
+                            : Colors.blueGrey.shade400,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         item.date,
@@ -526,11 +621,40 @@ class _NewsCard extends StatelessWidget {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const Spacer(),
+                      if (item.author.isNotEmpty) ...[
+                        const SizedBox(width: 6),
+                        Text(
+                          '•',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark
+                                ? Colors.white38
+                                : Colors.blueGrey.shade400,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            item.author,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark
+                                  ? Colors.white38
+                                  : Colors.blueGrey.shade400,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ] else ...[
+                        const Spacer(),
+                      ],
                       Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            'Read more',
+                          const Text(
+                            'Lire plus',
                             style: TextStyle(
                               fontSize: 12,
                               color: AppColors.accent,
@@ -681,12 +805,12 @@ class _ErrorView extends StatelessWidget {
                 size: 64, color: Colors.blueGrey),
             const SizedBox(height: 16),
             const Text(
-              'Could not load news',
+              'Impossible de charger les actualités',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Text(
-              'Check your internet connection and try again.',
+              'Vérifiez votre connexion internet et réessayez.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.blueGrey.shade400, fontSize: 14),
             ),
@@ -694,7 +818,7 @@ class _ErrorView extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Retry'),
+              label: const Text('Réessayer'),
             ),
           ],
         ),
@@ -704,27 +828,49 @@ class _ErrorView extends StatelessWidget {
 }
 
 class _EmptyView extends StatelessWidget {
-  const _EmptyView();
+  final String? searchQuery;
+  final VoidCallback? onClearSearch;
+
+  const _EmptyView({this.searchQuery, this.onClearSearch});
 
   @override
   Widget build(BuildContext context) {
+    final hasQuery = searchQuery != null && searchQuery!.isNotEmpty;
+
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.article_outlined,
-              size: 64, color: Colors.blueGrey.shade300),
-          const SizedBox(height: 16),
-          const Text(
-            'No articles found',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Try selecting a different category.',
-            style: TextStyle(color: Colors.blueGrey.shade400),
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              hasQuery ? Icons.search_off_rounded : Icons.article_outlined,
+              size: 64,
+              color: Colors.blueGrey.shade300,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              hasQuery ? 'Aucun article trouvé' : 'Aucun article disponible',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              hasQuery
+                  ? 'Aucun résultat ne correspond à "$searchQuery".'
+                  : 'Essayez de sélectionner une autre catégorie.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.blueGrey.shade400),
+            ),
+            if (hasQuery && onClearSearch != null) ...[
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: onClearSearch,
+                icon: const Icon(Icons.clear_rounded),
+                label: const Text('Effacer la recherche'),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
